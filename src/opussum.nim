@@ -64,17 +64,19 @@ let
   opusVersion* {.opusHead, importc: "API_VERSION".}: cint
     ##  API version for this opus headers. Can be used to check for features at compile time  
 
+const allowedSamplingRates = [8000.int32, 12000, 16000, 24000, 48000]
+
 # TODO, split into different files
   
 #
 # Encoder
 #
 {.push header: "opus/opus.h".}
-proc getEncoderSize*(channels: cint) {.importc: "opus_encoder_get_size".}
+proc getEncoderSize*(channels: cint): cint {.importc: "opus_encoder_get_size".}
   ## Gets the size of an OpusEncoderRaw structure
   ## * **channels**: Number of channels. This must be 1 or 2
 
-proc init*(st: ptr OpusEncoderRaw, fs: opusInt32, channels, application: cint) {.importc: "opus_encoder_init".}
+proc init*(st: ptr OpusEncoderRaw, fs: opusInt32, channels, application: cint): cint {.importc: "opus_encoder_init".}
   ## Initializes a previously allocated encoder state The memory pointed to by st must be at least the size returned by getEncoderSize_.
   ## This is intended for applications which use their own allocator instead of malloc
   ## * **str**: Encoder state
@@ -84,19 +86,26 @@ proc init*(st: ptr OpusEncoderRaw, fs: opusInt32, channels, application: cint) {
 
 
   
-proc encode*(st: ptr OpusEncoderRaw, pcm: ptr opusInt16, frameSize: cint, data: cstring, max_data_bytes: opusInt32) {.importc: "opus_encode"}
+proc encode*(st: ptr OpusEncoderRaw, pcm: ptr opusInt16, frameSize: cint, data: cstring, max_data_bytes: opusInt32): opusInt32 {.importc: "opus_encode"}
   ## Encodes an opus frame
   ## * **st**: Encoder state
   ## * **pcm**: Input signal (interleaved if 2 channels). Length is (frame_size * channels * sizeof(opus_int16))
   ## * **data**: Output payload. This must contain storage for at least max_data_bytes
   ## * **max_data_bytes**: Size of the allocated memory for the output payload. This may be used to impose an upper limit on the instant bitrate, but should not be used as the only bitrate control. Use setBitrate_ to control the bitrate
-
-proc createEncoder*(fs: opusInt32, channels, application: cint, error: ptr int): ptr OpusEncoder {.importc: "opus_encoder_create".}
+  ## * **returns**: Length of the encoded bytes on success or error code on failure
+proc opusCreateEncoder*(fs: opusInt32, channels, application: cint, error: ptr cint): ptr OpusEncoderRaw {.importc: "opus_encoder_create".}
   ## Allocates and initialises an encoder state
   ## * **fs**: Sampling rate of the input signal. This must be one of 8000, 12000, 16000, 24000, or 48000
   ## * **channels**: Number of channels (1 or 2) in input signal
   ## * **application**: Coding mode
   ## * **error**: Error code is put in here
+
+proc createEncoder*(fs: int32, channels: range[1..2], application: OpusApplicationModes): OpusEncoder =
+  ## Creates an encoder (this does not need to be destroyed manually)
+  assert fs in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
+  var error: cint
+  result.internal = opusCreateEncoder(fs.opusInt32, channels.cint, application.ord.cint, addr error)
+  checkRC error
 
 proc destroy*(st: ptr OpusEncoderRaw) {.importc: "opus_encoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by encoderCreate_
