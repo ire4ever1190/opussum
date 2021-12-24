@@ -1,6 +1,6 @@
 
-{.passC: staticExec("pkg-config --cflags opus libopusenc").}
-{.passL: staticExec("pkg-config --libs opus libopusenc").}
+{.passC: staticExec("pkg-config --cflags opus").}
+{.passL: staticExec("pkg-config --libs opus").}
 
 {.pragma: opusHead, header: "opus/opusenc.h".}
 
@@ -57,6 +57,8 @@ template checkRC*(call: untyped) =
   ## Checks the return value of a function and throws error if < 0.
   let res = call
   if res < 0:
+    when (NimMajor, NimMinor, NimPatch) >= (1, 6, 0):
+      {.warning[HoleEnumConv]: off.}
     let error = OpusErrorCodes(abs(res))
     raise (ref OpusError)(msg: $error)
     
@@ -100,18 +102,19 @@ proc opusCreateEncoder*(fs: opusInt32, channels, application: cint, error: ptr c
   ## * **application**: Coding mode
   ## * **error**: Error code is put in here
 
-proc createEncoder*(fs: int32, channels: range[1..2], application: OpusApplicationModes): OpusEncoder =
-  ## Creates an encoder (this does not need to be destroyed manually)
-  assert fs in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
-  var error: cint
-  result.internal = opusCreateEncoder(fs.opusInt32, channels.cint, application.ord.cint, addr error)
-  checkRC error
 
 proc destroy*(st: ptr OpusEncoderRaw) {.importc: "opus_encoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by encoderCreate_
 
 {.pop.}
 
+proc createEncoder*(fs: int32, channels: range[1..2], application: OpusApplicationModes): OpusEncoder =
+  ## Creates an encoder (this does not need to be destroyed manually)
+  assert fs in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
+  var error: cint
+  # result.internal = opusCreateEncoder(fs.opusInt32, channels.cint, application.ord.cint, addr error)
+  checkRC error
+  
 proc `=destroy`*[T](obj: var OpaqueObject[T]) =
   ## Cleans up an OpaqueObject_ by destroying the internal pointer
   if obj != nil and obj.internal != nil:
