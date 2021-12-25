@@ -116,7 +116,7 @@ proc opusCreateEncoder*(fs: opusInt32, channels, application: cint, error: ptr c
 
 
 proc destroy*(st: ptr OpusEncoderRaw) {.importc: "opus_encoder_destroy".}
-  ## Frees an OpusEncoderRaw_ allocated by encoderCreate_
+  ## Frees an OpusEncoderRaw_ allocated by opusCreateEncoder_
 
 #
 # Decoder
@@ -127,15 +127,25 @@ proc getDecoderSize*(channels: cint): cint {.importc: "opus_decoder_get_size".}
   ## * **channels**: Number of channels. This must be 1 or 2
 
 proc opusCreateDecoder*(fs: opusInt32, channels: cint, error: ptr cint): ptr OpusDecoderRaw {.importc: "opus_decoder_create".}
-  
+  ## Allocates and initialises a decoder state
+  ## * **fs**: Sample rate to decode at (Hz). This must be one of 8000, 12000, 16000, 24000, or 48000
+  ## * **channels**: Number of channels (1 or 2) to decode
+  ## * **error** Where to store error
+
 proc destroy*(str: ptr OpusDecoderRaw) {.importc: "opus_decoder_destroy".}
+  ## Frees an OpusEncoderRaw_ allocated by opusCreateDecoder_
 
-proc decode*(st: ptr OpusDecoderRaw, data: cstring, len: opusInt32, outData: ptr opusInt16, frame_size, decode_fec: cint): cint {.importc: "opus_decode".}
-
+proc decode*(st: ptr OpusDecoderRaw, data: cstring, len: opusInt32, outData: ptr opusInt16, frame_size, decodeFec: cint): cint {.importc: "opus_decode".}
+  ## Decodes an opus packet
+  ## * **st**: Decoder state
+  ## * **data**: Opus encoded packet
+  ## * **len**: Length of `data`
+  ## * **outData**: Where to store PCM bytes (length is frameSize * channels)
+  ## * **decodeFec**: flag (0 or 1) to request that any in-band forward error correction data be decoded. If no such data is available, the frame is decoded as if it was lost
 {.pop.}
 
 template makeDestructor(kind: untyped) =
-  proc `=destroy`*(obj: var kind) =
+  proc `=destroy`(obj: var kind) =
     ## Cleans up an OpaqueObject_ by destroying the internal pointer
     if obj.internal != nil:
       destroy obj.internal
@@ -145,7 +155,7 @@ template makeDestructor(kind: untyped) =
 makeDestructor(OpusDecoder)
 makeDestructor(OpusEncoder)
 
-proc `=destroy`*(pcm: var PCMBytes) =
+proc `=destroy`(pcm: var PCMBytes) =
   if pcm.data != nil:
     freeShared pcm.data
     pcm.data = nil
@@ -154,7 +164,8 @@ template checkSampleRate(sampleRate: int32) =
   assert sampleRate in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
 
 proc createEncoder*(sampleRate: int32, channels: range[1..2], frameSize: int, application: OpusApplicationModes): OpusEncoder =
-  ## Creates an encoder (this does not need to be destroyed manually)
+  ## Creates an encoder. This is recommend over opusCreateEncoder_ since this has more helper procs and you don't need to manage
+  ## its memory
   checkSampleRate sampleRate
   var error: cint
   result.internal = opusCreateEncoder(sampleRate.opusInt32, channels.cint, application.ord.cint, addr error)
@@ -163,12 +174,15 @@ proc createEncoder*(sampleRate: int32, channels: range[1..2], frameSize: int, ap
   checkRC error
 
 proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): OpusDecoder =
+  ## Creates a decoder. This is recommend over opusCreateEncoder_ since this has more helper procs and you don't need to manage
+  ## its memory
   checkSampleRate sampleRate
   var error: cint
   result.internal = opusCreateDecoder(sampleRate, channels, addr error)
   result.frameSize = frameSize
   result.channels = channels
 
+# https://github.com/bydingnan/opus-demo/blob/master/trivial_example.c
 #[
      {
       int i;
@@ -187,42 +201,35 @@ proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): O
 proc packetSize*[T](obj: OpaqueOpusObject[T]): int {.inline.} =
   result = obj.frameSize * obj.channels
 
-proc toPCMBytes(data: sink string, frameSize, channels: int): PCMBytes =
+proc toPCMBytes*(data: sink string, frameSize, channels: int): PCMBytes =
   ## Converts a string to pcm bytes
-  let size = frameSize * channels * 2
+  let size = frameSize * channels
   echo size
   result.len = size
   result.data = cast[ptr UnCheckedArray[opusInt16]](createShared(opusInt16, size))
   # Convert to little endian int16 
-  for i in 0..<(channels * frameSize):
+  for i in 0..<size:
     result.data[i] = cast[opusInt16]((data[2 * i + 1].ord shl 8) or data[2 * i].ord)
 
 proc toPCMBytes*[T](data: sink string, opus: OpaqueOpusObject[T]): PCMBytes =
   ## Like the other `toPCMBytes` except it uses the settings from an OpusEncoder_ or OpusDecoder_
   result = data.toPCMBytes(opus.frameSize, opus.channels)
     
-proc encode*(encoder: OpusEncoder, data: PCMBytes, size: int): OpusFrame =
+proc encode*(encoder: OpusEncoder, data: PCMBytes): OpusFrame =
   ## Encodes an opus frame
-  # runnableExamples:
-    # import std/streams
-    # let
-      # rawData = newFileStream("tests/test.raw", fmRead)
-      # encoder = createEncoder(48000, 2, 960, Voip)
-      # pcmBytes = rawData.readStr(1920 * 2).toPcmBytes(encoder)
-    # let encoded = encoder.encode(pcmBytes, 1920)
-     # 
+  ##
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
-  var outData = cast[cstring](createShared(char, size))
+  var outData = cast[cstring](createShared(char, data.len))
   
   let length = encoder.internal.encode(
     cast[ptr opusInt16](data.data),
     encoder.frameSize.cint,
     outData,
-    size.cint
+    data.len.cint
   )
   checkRC length
-  
+  echo length
   # Move bytes to result
   # TODO: benchmark if it would be faster to do setLen and then move cstring to result
   result = OpusFrame(newString length)
@@ -233,18 +240,30 @@ proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = f
   ## Decodes an opus frame
   let packetSize = decoder.packetSize
   result.data = cast[ptr UncheckedArray[opusInt16]](createShared(opusInt16, packetSize))
-  let length = decoder.internal.decode(
+  let frameSize = decoder.internal.decode(
     encoded.cstring, 
     encoded.cstring.len.opusInt32,
     cast[ptr opusInt16](result.data),
     cint(packetSize * 2),
     cast[cint](errorCorrection)
     )
-  checkRC length
-  result.len = length
+  checkRC frameSize
+  result.len = frameSize * 2 # frameSize is number of shorts (2 bytes) and we need bytes (1 byte)
   
   
 proc destroy*[T](obj: OpaqueOpusObject[T]) {.inline.} =
-  ## Calls the `destroy` proc that is relevant for the internal pointer
+  ## Calls the `destroy` proc that is relevant for the internal pointer.
+  ## Use this if you want to manually manage an OpaqueOpusObject_
   destroy obj.internal
   obj.internal = nil
+
+proc `==`*(x, y: PCMBytes): bool =
+  if x.len == y.len:
+    for i in 0..<x.len:
+      echo x.data[i], " ", y.data[i]
+
+proc `$`*(pcm: PCMBytes): string =
+  result = newString(pcm.len * 2)
+  for i in 0..<pcm.len:
+    result[2 * i] = cast[char](pcm.data[i] and 0xFF)
+    result[2 * i + 1] = cast[char]((pcm.data[i] shr 8) and 0xFF)
