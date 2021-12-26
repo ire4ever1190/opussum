@@ -216,7 +216,7 @@ proc performCTLGet*(coder: Coder, getter: static[CTLGetter]): cint =
   ## Runs a CTL get code and returns the value
   runnableExamples:
     let encoder = createEncoder(48000, 2, 960, Audio)
-    doAssert encoder.performCTLGet(getBitrate) == 8
+    doAssert encoder.performCTLGet(getBitrate) == 120000
   performCTLImpl(getter, result.addr)
 
 
@@ -224,5 +224,6 @@ proc performCTLSet*(coder: Coder, setter: static[CTLSetter], val: uint32) =
   ## Runs a CTL set code
   runnableExamples:
     let encoder = createEncoder(48000, 2, 960, Audio)
-    encoder.performCTLSet setBitrate(14000)
+    encoder.performCTLSet(setBitrate, 14000)
+
   performCTLImpl(setter, val.cint)
