@@ -31,6 +31,11 @@ proc decode*(st: ptr OpusDecoderRaw, data: cstring, len: opusInt32, outData: ptr
   ## * **outData**: Where to store PCM bytes (length is frameSize * channels)
   ## * **decodeFec**: flag (0 or 1) to request that any in-band forward error correction data be decoded. If no such data is available, the frame is decoded as if it was lost
 
+
+proc performCTL*(st: ptr OpusDecoderRaw, request: cint): cint {.importc: "opus_encoder_ctl", varargs.}
+  ## Performs a CTL code.
+  ## Only generic or decoder codes can be run
+
 {.pop.}
 
 proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): OpusDecoder =

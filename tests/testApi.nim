@@ -1,7 +1,7 @@
 import unittest
 import opussum
 import std/streams
-
+import std/os
 #
 # Test data comes from joystock
 # Music by Joystock - https://www.joystock.org
@@ -29,12 +29,18 @@ suite "Decoder":
 
   test "Decode data":
     check canEncode
-    let encoder = createEncoder(48000, 2, 960, Voip)
+    let encoder = createEncoder(48000, 2, 960, Audio)
     rawData = newFileStream("tests/test.raw", fmRead)
-    var buf: string
-    let pcmBytes = rawData.readStr(1920 * 2).toPCMBytes(encoder)
-    let encodedData = encoder.encode(pcmBytes)
-    discard decoder.decode(encodedData)
+    let
+      pcmBytes = rawData.readStr(1920 * 2).toPCMBytes(encoder)
+      encodedData = encoder.encode(pcmBytes)
+      decodedData = decoder.decode(encodedData)
 
+suite "CTL codes":
+  let encoder = createEncoder(48000, 2, 960, Audio)
+  test "Get a value":
+    check encoder.performCTL(getBitrate) == 120000
 
-GC_fullcollect()
+  test "Set a value":
+    encoder.performCTL(setBitrate, 36000)
+    check encoder.performCTL(getBitrate) == 36000

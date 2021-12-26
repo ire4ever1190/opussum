@@ -37,6 +37,9 @@ proc `$`*(pcm: PCMData): string =
     # Convert endianess
     result[2 * i] = cast[char](pcm.data[i] and 0xFF)
     result[2 * i + 1] = cast[char]((pcm.data[i] shr 8) and 0xFF)
+  # echo result[0].ord
+  # echo result[^1].ord
+  # echo ""
 
 proc `=destroy`(pcm: var PCMData) =
   if pcm.data != nil:
