@@ -1,4 +1,4 @@
-import common, pcmbytes
+import common, pcmdata
 
 ## The decoder is used to decode opus frames into raw PCM bytes
 
@@ -42,7 +42,7 @@ proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): O
   result.frameSize = frameSize
   result.channels = channels
 
-proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = false): PCMBytes =
+proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = false): PCMData =
   ## Decodes an opus frame
   let packetSize = decoder.packetSize
   result.data = cast[ptr UncheckedArray[opusInt16]](createShared(opusInt16, packetSize))

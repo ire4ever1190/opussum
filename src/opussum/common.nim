@@ -70,17 +70,9 @@ let
   opusVersion* {.header: opusHeader, importc: "API_VERSION".}: cint
     ##  API version for this opus headers. Can be used to check for features at compile time
 
-
-
 proc packetSize*[T](obj: OpaqueOpusObject[T]): int {.inline.} =
+  ## Returns the packet size for an encoder/decoder (frameSize * channels)
   result = obj.frameSize * obj.channels
-
-template makeDestructor(kind: untyped) =
-  proc `=destroy`(obj: var kind) =
-    ## Cleans up an OpaqueObject_ by destroying the internal pointer
-    if obj.internal != nil:
-      destroy obj.internal
-      obj.internal = nil
 
 proc `=destroy`[T: object](obj: var OpaqueOpusObject[T]) =
   mixin destroy

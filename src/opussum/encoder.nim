@@ -1,4 +1,4 @@
-import common, pcmbytes
+import common, pcmdata
 
 ## The encoder is used to encode raw PCM bytes into opus frames.
 
@@ -52,7 +52,7 @@ proc createEncoder*(sampleRate: int32, channels: range[1..2], frameSize: int, ap
   result.channels = channels
   checkRC error
 
-proc encode*(encoder: OpusEncoder, data: PCMBytes): OpusFrame =
+proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   ## Encodes some PCMBytes_ into an opus frame
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
