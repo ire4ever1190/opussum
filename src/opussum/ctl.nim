@@ -7,6 +7,8 @@ import common
 import encoder, decoder
 import os
 
+
+
 type
   Coder = OpusDecoder | OpusEncoder
 
@@ -226,6 +228,6 @@ proc performCTL*(coder: Coder, setter: static[CTLSetter], val: int32) =
   runnableExamples:
     import opussum
     let encoder = createEncoder(48000, 2, 960, Audio)
-    encoder.performCTL(setBitrate, 14000)
-
+    encoder.performCTL(setMaxBandwidth, bandwidthWide.int32)
   performCTLImpl(setter, val.cint)
+
