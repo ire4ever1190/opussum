@@ -55,7 +55,7 @@ type
 
 const
   allowedSamplingRates* = [8000.int32, 12000, 16000, 24000, 48000]
-  opusHeader* = "opus/opusenc.h"
+  opusHeader* = "opus/opus.h"
 
 template checkRC*(call: untyped) =
   ## Checks the return value of a function and throws error if < 0.

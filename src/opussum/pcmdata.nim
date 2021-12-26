@@ -15,7 +15,10 @@ proc toPCMBytes*(data: sink string, frameSize, channels: int): PCMData =
   result.data = cast[ptr UnCheckedArray[opusInt16]](createShared(opusInt16, size))
   # Convert to little endian int16
   for i in 0..<(data.len div 2):
-    result.data[i] = cast[opusInt16]((data[2 * i + 1].ord shl 8) or data[2 * i].ord)
+    result.data[i] = cast[opusInt16](
+      (data[2 * i + 1].ord shl 8) or
+      data[2 * i].ord
+    )
 
 proc toPCMBytes*[T](data: sink string, opus: OpaqueOpusObject[T]): PCMData =
   ## Like the other `toPCMBytes` except it uses the settings from an OpusEncoder_ or OpusDecoder_
