@@ -3,13 +3,15 @@ import opussum/[
   common,
   encoder,
   decoder,
-  pcmdata
+  pcmdata,
+  ctl
 ]
 
 export common,
   encoder,
   decoder,
-  pcmdata
+  pcmdata,
+  ctl
 
 
 

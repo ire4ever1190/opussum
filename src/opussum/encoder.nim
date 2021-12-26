@@ -40,6 +40,10 @@ proc opusCreateEncoder*(fs: opusInt32, channels, application: cint, error: ptr c
 proc destroy*(st: ptr OpusEncoderRaw) {.importc: "opus_encoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by opusCreateEncoder_
 
+proc performCTL*(st: ptr OpusEncoderRaw, request: cint): cint {.importc: "opus_encoder_ctl", varargs.}
+  ## Performs a CTL code.
+  ## only generic or encoder codes can be ran
+
 {.pop.}
 
 proc createEncoder*(sampleRate: int32, channels: range[1..2], frameSize: int, application: OpusApplicationModes): OpusEncoder =
