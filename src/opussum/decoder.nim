@@ -23,7 +23,7 @@ proc opusCreateDecoder*(fs: opusInt32, channels: cint, error: ptr cint): ptr Opu
 proc destroy*(str: ptr OpusDecoderRaw) {.importc: "opus_decoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by opusCreateDecoder_
 
-proc decode*(st: ptr OpusDecoderRaw, data: cstring, len: opusInt32, outData: ptr opusInt16, frame_size, decodeFec: cint): cint {.importc: "opus_decode".}
+proc decode*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, outData: ptr opusInt16, frame_size, decodeFec: cint): cint {.importc: "opus_decode".}
   ## Decodes an opus packet
   ## * **st**: Decoder state
   ## * **data**: Opus encoded packet
@@ -52,11 +52,11 @@ proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = f
   let packetSize = decoder.packetSize
   result.data = cast[ptr UncheckedArray[opusInt16]](createShared(opusInt16, packetSize))
   let frameSize = decoder.internal.decode(
-    encoded.cstring,
-    encoded.cstring.len.opusInt32,
+    encoded.pass(),
+    encoded.len.opusInt32,
     cast[ptr opusInt16](result.data),
-    cint(packetSize * 2),
+    cint(maxFrameSize),
     cast[cint](errorCorrection)
     )
   checkRC frameSize
-  result.len = frameSize * 2 # frameSize is number of shorts (2 bytes) and we need bytes (1 byte)
+  result.len = frameSize * decoder.channels 

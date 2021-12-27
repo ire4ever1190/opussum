@@ -38,6 +38,11 @@ type
     frameSize*: int
     channels*: int
 
+  CArray*[T] = object
+    ## C array abstraction, use result of pass_ to pass the internal data to an array
+    internal*: ptr UncheckedArray[T]
+    len*: int
+
   OpusError* = object of CatchableError
 
   opusInt* = cint
@@ -51,12 +56,14 @@ type
   opusInt16* = cshort
   opusInt32* = cint
 
-  OpusFrame* = distinct cstring
+  OpusFrame* = CArray[uint8]
 
 const
   allowedSamplingRates* = [8000.int32, 12000, 16000, 24000, 48000]
   opusHeader* = "opus/opus.h"
-
+  maxFrameSize* {.intdefine.} = 6 * 960
+  maxPacketSize* {.intdefine.} = 3 * 1276
+  
 template checkRC*(call: untyped) =
   ## Checks the return value of a function and throws error if < 0.
   let res = call
@@ -80,9 +87,33 @@ proc `=destroy`[T: object](obj: var OpaqueOpusObject[T]) =
     destroy obj.internal
     obj.internal = nil
 
+proc `=destroy`[T](arr: var CArray[T]) =
+  if arr.internal != nil:
+    freeShared arr.internal
+    arr.internal = nil
+
+
 template checkSampleRate*(sampleRate: int32) =
   ## **Internal**: Used to check if a sample rate is a correct value(See allowedSamplingRates_)
   assert sampleRate in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
 
-proc `$`*(data: OpusFrame): string =
-  result = $data.cstring
+proc newCArray*[T](size: int): CArray[T] =
+  ## Creates a new CArray with size `size`.
+  ## `T` should not contain GC memory
+  result.len = size
+  result.internal = cast[ptr UncheckedArray[T]](createShared(T, size))
+
+proc `[]`*[T](arr: CArray[T], index: int): T =
+  result = arr.internal[index]
+
+proc `[]=`*[T](arr: CArray[T], index: int, val: T) =
+  arr.internal[index] = val
+
+proc `$`*[T: uint8 | char](arr: CArray[T]): string =
+  result = newString arr.len
+  for i in 0..<arr.len:
+    result[i] = cast[char](arr[i])
+
+proc pass*[T](arr: CArray[T]): ptr T =
+  ## Passes pointer to first item in array, useful when interfacing with procs that take `ptr T` parameter
+  result = addr arr.internal[0]

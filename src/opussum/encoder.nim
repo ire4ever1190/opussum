@@ -21,7 +21,7 @@ proc init*(st: ptr OpusEncoderRaw, fs: opusInt32, channels, application: cint): 
   ## * **channels**: Number of channels in input signal
   ## * **application**: Coding mode. See _OpusApplicationModes
 
-proc encode*(st: ptr OpusEncoderRaw, data: ptr opusInt16, frameSize: cint, outData: cstring, max_data_bytes: opusInt32): opusInt32 {.importc: "opus_encode"}
+proc encode*(st: ptr OpusEncoderRaw, data: ptr opusInt16, frameSize: cint, outData: ptr uint8, max_data_bytes: opusInt32): opusInt32 {.importc: "opus_encode"}
   ## Encodes an opus frame
   ## * **st**: Encoder state
   ## * **data**: Input signal (interleaved if 2 channels). Length is (frame_size * channels * sizeof(opus_int16))
@@ -60,16 +60,16 @@ proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   ## Encodes some PCMBytes_ into an opus frame
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
-  var outData = cast[cstring](createShared(char, data.len))
+  var outData = cast[ptr UncheckedArray[uint8]](createShared(uint8, data.len))
 
   let length = encoder.internal.encode(
-    cast[ptr opusInt16](data.data),
+    addr data.data[0],
     encoder.frameSize.cint,
-    outData,
-    data.len.cint
+    addr outData[0],
+    maxPacketSize
   )
   checkRC length
   # Move bytes to result
-  result = OpusFrame(newString length)
+  result = newCArray[uint8](length)
   for i in 0..<length:
-    result.cstring[i] = outData[i]
+    result[i] = outData[i]
