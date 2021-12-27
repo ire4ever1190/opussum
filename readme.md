@@ -1,6 +1,6 @@
 Wrapper around [libopus](https://opus-codec.org/)
 
-[Docs here](https://tempdocs.netlify.app/opussum/stable)
+[Docs here](https://docs.leahy.dev/opussum/stable)
 
 Requires `opus` to be installed (usually done with your systems package manager)
 
