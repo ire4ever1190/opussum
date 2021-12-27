@@ -60,16 +60,12 @@ proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   ## Encodes some PCMBytes_ into an opus frame
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
-  var outData = cast[ptr UncheckedArray[uint8]](createShared(uint8, data.len))
-
+  result = newCArray[uint8](data.len)
   let length = encoder.internal.encode(
     addr data.data[0],
     encoder.frameSize.cint,
-    addr outData[0],
-    maxPacketSize
+    pass result,
+    data.len.opusInt32
   )
   checkRC length
-  # Move bytes to result
-  result = newCArray[uint8](length)
-  for i in 0..<length:
-    result[i] = outData[i]
+  result.len = length

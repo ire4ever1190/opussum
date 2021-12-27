@@ -1,3 +1,5 @@
+import carray
+
 {.passC: staticExec("pkg-config --cflags opus").}
 {.passL: staticExec("pkg-config --libs opus").}
 
@@ -37,11 +39,6 @@ type
     internal*: ptr T
     frameSize*: int
     channels*: int
-
-  CArray*[T] = object
-    ## C array abstraction, use result of pass_ to pass the internal data to an array
-    internal*: ptr UncheckedArray[T]
-    len*: int
 
   OpusError* = object of CatchableError
 
@@ -87,33 +84,8 @@ proc `=destroy`[T: object](obj: var OpaqueOpusObject[T]) =
     destroy obj.internal
     obj.internal = nil
 
-proc `=destroy`[T](arr: var CArray[T]) =
-  if arr.internal != nil:
-    freeShared arr.internal
-    arr.internal = nil
-
-
 template checkSampleRate*(sampleRate: int32) =
   ## **Internal**: Used to check if a sample rate is a correct value(See allowedSamplingRates_)
   assert sampleRate in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
 
-proc newCArray*[T](size: int): CArray[T] =
-  ## Creates a new CArray with size `size`.
-  ## `T` should not contain GC memory
-  result.len = size
-  result.internal = cast[ptr UncheckedArray[T]](createShared(T, size))
-
-proc `[]`*[T](arr: CArray[T], index: int): T =
-  result = arr.internal[index]
-
-proc `[]=`*[T](arr: CArray[T], index: int, val: T) =
-  arr.internal[index] = val
-
-proc `$`*[T: uint8 | char](arr: CArray[T]): string =
-  result = newString arr.len
-  for i in 0..<arr.len:
-    result[i] = cast[char](arr[i])
-
-proc pass*[T](arr: CArray[T]): ptr T =
-  ## Passes pointer to first item in array, useful when interfacing with procs that take `ptr T` parameter
-  result = addr arr.internal[0]
+export carray

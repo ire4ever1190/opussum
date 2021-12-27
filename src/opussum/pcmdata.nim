@@ -1,14 +1,17 @@
 import common
 
 type
+  ## TODO: Replace this with CArray?
   PCMData* = object
     ## Stores raw pcm data.
     ## * **len**: Length of the data (number of int16 values in the array)
     len*: int
     data*: ptr UncheckedArray[opusInt16]
 
+# TODO: See if this works with single channel data
+
 proc toPCMBytes*(data: sink string, frameSize, channels: int): PCMData =
-  ## Converts a string to pcm bytes
+  ## Converts a string to pcm data.
   assert data.len <= frameSize * channels * 2, "Data is too big"
   let size = frameSize * channels
   result.len = size
@@ -37,9 +40,6 @@ proc `$`*(pcm: PCMData): string =
     # Convert endianess
     result[2 * i] = cast[char](pcm.data[i] and 0xFF)
     result[2 * i + 1] = cast[char]((pcm.data[i] shr 8) and 0xFF)
-  # echo result[0].ord
-  # echo result[^1].ord
-  # echo ""
 
 proc `=destroy`(pcm: var PCMData) =
   if pcm.data != nil:
