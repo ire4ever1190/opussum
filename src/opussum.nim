@@ -3,16 +3,17 @@ import opussum/[
   common,
   encoder,
   decoder,
-  pcmdata,
-  ctl
+  pcmdata
 ]
 
 export common,
   encoder,
   decoder,
-  pcmdata,
-  ctl
+  pcmdata
 
+when (NimMajor, NimMinor) > (1, 4): 
+  import opussum/ctl
+  export ctl
 
 
 

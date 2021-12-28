@@ -29,14 +29,13 @@ suite "Decoder":
   test "Decode data":
     check canEncode
     let encoder = createEncoder(48000, 2, 960, Audio)
-    encoder.performCTL(setBitrate, 14000)
     rawData.setPosition 0
     let
       pcmBytes = rawData.readStr(960 * encoder.channels * 2).toPCMBytes(encoder)
       encodedData = encoder.encode(pcmBytes)
       decodedData = decoder.decode(encodedData)
 
-when (NimMajor, NimMinor) >= (1, 4): 
+when (NimMajor, NimMinor) > (1, 4): 
   # Nim 1.4 >= has issue with CTL stuff not getting included properly
   # using nim 1.6 <= fixes this
   suite "CTL codes":
