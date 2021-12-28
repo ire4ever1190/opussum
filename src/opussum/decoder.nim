@@ -50,11 +50,11 @@ proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): O
 proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = false): PCMData =
   ## Decodes an opus frame
   let packetSize = decoder.packetSize
-  result.data = cast[ptr UncheckedArray[opusInt16]](createShared(opusInt16, packetSize))
+  result = newCArray[opusInt16](packetSize)
   let frameSize = decoder.internal.decode(
     encoded.pass(),
     encoded.len.opusInt32,
-    cast[ptr opusInt16](result.data),
+    pass result,
     cint(maxFrameSize),
     cast[cint](errorCorrection)
     )

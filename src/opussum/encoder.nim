@@ -62,7 +62,7 @@ proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   # Allocate needed buffers
   result = newCArray[uint8](data.len)
   let length = encoder.internal.encode(
-    addr data.data[0],
+    pass data,
     encoder.frameSize.cint,
     pass result,
     data.len.opusInt32

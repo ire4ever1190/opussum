@@ -24,6 +24,13 @@ proc `$`*[T: uint8 | char](arr: CArray[T]): string =
   for i in 0..<arr.len:
     result[i] = cast[char](arr[i])
 
+proc `==`*[T](x, y: CArray[T]): bool =
+  ## Check if two arrays are equal by comparing each byte
+  if x.len == y.len:
+    for i in 0..<x.len:
+      if x[i] != y[i]:
+        return false
+
 proc pass*[T](arr: CArray[T]): ptr T =
   ## Passes pointer to first item in array, useful when interfacing with procs that take `ptr T` parameter
   result = addr arr.internal[0]
