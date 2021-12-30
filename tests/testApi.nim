@@ -35,6 +35,7 @@ suite "Decoder":
       encodedData = encoder.encode(pcmBytes)
       decodedData = decoder.decode(encodedData)
 
+
 when (NimMajor, NimMinor) > (1, 4): 
   # Nim 1.4 >= has issue with CTL stuff not getting included properly
   # using nim 1.6 <= fixes this

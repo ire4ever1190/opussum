@@ -34,6 +34,10 @@ proc `==`*[T](x, y: CArray[T]): bool =
 
 proc pass*[T](arr: CArray[T]): ptr T =
   ## Passes pointer to first item in array, useful when interfacing with procs that take `ptr T` parameter
+  runnableExamples "-r:off":
+    proc cFunction(x: ptr cint): cint = discard # Imagine it was {.importc.}
+    let data = newCArray[cint](10)
+    doAssert cFunction(pass data) == 0
   result = addr arr.internal[0]
 
 proc `=destroy`[T](arr: var CArray[T]) =
