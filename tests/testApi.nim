@@ -18,7 +18,7 @@ suite "Encoder":
     # We want to encode 1 frame.
     # Since we have two channels, we need 1920 bytes, and since we need an int16 array we need twice as many bytes
     # Since we have bytes and PCM is int16, we need to get twice as many bytes
-    discard encoder.encode(rawData.readStr(960 * encoder.channels * 2).toPCMBytes(encoder))
+    discard encoder.encode(rawData.readStr(960 * encoder.channels * 2).toPCMData(encoder))
     canEncode = true
     
 suite "Decoder":
@@ -31,7 +31,7 @@ suite "Decoder":
     let encoder = createEncoder(48000, 2, 960, Audio)
     rawData.setPosition 0
     let
-      pcmBytes = rawData.readStr(960 * encoder.channels * 2).toPCMBytes(encoder)
+      pcmBytes = rawData.readStr(960 * encoder.channels * 2).toPCMData(encoder)
       encodedData = encoder.encode(pcmBytes)
       decodedData = decoder.decode(encodedData)
 

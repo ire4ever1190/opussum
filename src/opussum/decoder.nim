@@ -23,18 +23,26 @@ proc opusCreateDecoder*(fs: opusInt32, channels: cint, error: ptr cint): ptr Opu
 proc destroy*(str: ptr OpusDecoderRaw) {.importc: "opus_decoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by opusCreateDecoder_
 
-proc decode*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, outData: ptr opusInt16, frame_size, decodeFec: cint): cint {.importc: "opus_decode".}
+proc decode*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, pcm: ptr opusInt16, frame_size, decodeFec: cint): cint {.importc: "opus_decode".}
   ## Decodes an opus packet
   ## * **st**: Decoder state
   ## * **data**: Opus encoded packet
   ## * **len**: Length of `data`
-  ## * **outData**: Where to store PCM bytes (length is frameSize * channels)
+  ## * **pcm**: Where to store PCM bytes (length is frameSize * channels)
   ## * **decodeFec**: flag (0 or 1) to request that any in-band forward error correction data be decoded. If no such data is available, the frame is decoded as if it was lost
 
 
 proc performCTL*(st: ptr OpusDecoderRaw, request: cint): cint {.importc: "opus_encoder_ctl", varargs.}
   ## Performs a CTL code.
   ## Only generic or decoder codes can be run
+
+proc decodeFloat*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, pcm: ptr cfloat, frame_size, decodeFec: cint): cint {.importc: "opus_decode_float".}
+  ## Decodes an opus packet with floating point input.
+  ## See decode_ for details about parameters
+
+proc getNBSamples*(st: ptr OpusDecoderRaw, packet: ptr uint8, len: opusInt32): cint {.importc: "opus_get_nb_samples".}
+  ## Gets the number of samples of an Opus packet.
+
 
 {.pop.}
 
@@ -49,10 +57,26 @@ proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): O
 
 proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = false): PCMData =
   ## Decodes an opus frame
+  runnableExamples:
+    import std/streams
+    import opussum
+    let file = newFileStream("tests/test.raw")
+    let
+      enc = createEncoder(48000, 2, 960, Voip)
+      dec = createDecoder(48000, 2, 960)
+    while not file.atEnd:
+      let
+        pcmBytes = file.readStr(
+          enc.frameSize * enc.channels * 2 # We want to encode two channels worth of frame data
+        ).toPCMData(enc)
+        encodedData = enc.encode(pcmBytes) # Encode PCM to opus frame
+        decodedData = dec.decode(encodedData) # Decode opus frame
+
+  assert decoder.internal != nil, "Encoder has been destroyed"
   let packetSize = decoder.packetSize
   result = newCArray[opusInt16](packetSize)
   let frameSize = decoder.internal.decode(
-    encoded.pass(),
+    pass encoded,
     encoded.len.opusInt32,
     pass result,
     cint(maxFrameSize),

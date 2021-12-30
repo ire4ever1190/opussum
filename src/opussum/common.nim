@@ -75,7 +75,8 @@ let
     ##  API version for this opus headers. Can be used to check for features at compile time
 
 proc packetSize*[T](obj: OpaqueOpusObject[T]): int {.inline.} =
-  ## Returns the packet size for an encoder/decoder (frameSize * channels)
+  ## Returns the packet size for an encoder/decoder (frameSize * channels).
+  ## This can be used to figure out how much needs to be read from a stream for an encoder
   result = obj.frameSize * obj.channels
 
 proc `=destroy`[T: object](obj: var OpaqueOpusObject[T]) =

@@ -1,8 +1,9 @@
 
-## Small abstraction around the common `ptr T` parameters in procs
+## Small abstraction around the common `ptr T` parameters in procs.
+## This is meant to be used with simple types like `cint` or `uint8`
 
 type
-  CArray*[T] = object
+  CArray*[T: SomeInteger or SomeFloat or char] = object
     ## C array abstraction, use result of pass_ to pass the internal data to an array
     internal*: ptr UncheckedArray[T]
     len*: int
@@ -25,7 +26,7 @@ proc `$`*[T: uint8 | char](arr: CArray[T]): string =
     result[i] = cast[char](arr[i])
 
 proc `==`*[T](x, y: CArray[T]): bool =
-  ## Check if two arrays are equal by comparing each byte
+  ## Check if two arrays are equal by comparing each item
   if x.len == y.len:
     for i in 0..<x.len:
       if x[i] != y[i]:
@@ -37,5 +38,34 @@ proc pass*[T](arr: CArray[T]): ptr T =
 
 proc `=destroy`[T](arr: var CArray[T]) =
   if arr.internal != nil:
-    freeShared arr.internal
+    freeShared arr.internal # Do I need to destroy all the integers inside?
     arr.internal = nil
+
+proc `=copy`[T](dst: var CArray[T], src: CArray[T]) =
+  if dst.internal != src.internal: return
+  `=destroy`(dst)
+  wasMoved(dst)
+  dst = newCArray[T](src.len)
+  for i in 0..<src.len:
+    dst[i] = src[i]
+
+template itemsImpl[T](dst: CArray, body: untyped) {.dirty.} =
+  let L = dst.len
+  for i in 0..<L:
+    body
+    assert L == dst.len, "The length of the array changed while iterating over it"
+
+iterator items*[T](dst: CArray[T]): lent T =
+  ## Iterates over the values in the array
+  let L = dst.len
+  for i in 0..<L:
+    yield dst[i]
+    assert L == dst.len, "The length of the array changed while iterating over it"
+
+iterator mitems*[T](dst: var CArray[T]): var T =
+  ## Iterates over the values in the array. Allows you to modify the items
+  let L = dst.len
+  for i in 0..<L:
+    yield dst.internal[i]
+    assert L == dst.len, "The length of the array changed while iterating over it"
+

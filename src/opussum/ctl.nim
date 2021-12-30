@@ -1,7 +1,10 @@
 ## This file contains CTL functions that can be used in the performCTL function for decoder and encoders.
 ## It also contains helper functions for working with decoder and encoder objects
 ##
-## Generic CTLs can be used with both while decoder and encoder CTLs can only be used with their own respective functions
+## Generic CTLs can be used with both while decoder and encoder CTLs can only be used with their own respective functions.
+##
+## .. Note:: This module is only available with nim >= 1.6 due to a compilier error with older versions
+
 import common
 
 import encoder, decoder
@@ -13,7 +16,7 @@ type
   Coder = OpusDecoder | OpusEncoder
 
   # Since I needed some hacky functions later to work with c macros I use
-  # these distincts to stop people from using the wrong c macro
+  # these distincts to stop people from passing invalid strings without knowing
   EncoderCTLSetter* = distinct string
     ## CTL c macro used to set a config value for an encoder
 
@@ -32,8 +35,9 @@ type
     ## CTL c macro that can be used for both encoders and decoders
 
   CTLGetter = GenericCTLGetter | EncoderCTLGetter | DecoderCTLGetter
+    ## Any CTL c macro that gets a value
   CTLSetter = GenericCTLSetter | EncoderCTLSetter | DecoderCTLSetter
-
+    ## Any CTL c macro that sets a value
 {.push header: currentSourcePath().parentDir() / "concrete_defines.h".}
 let
   resetState* {.importc: "opus_reset_state".}: cint
@@ -229,5 +233,11 @@ proc performCTL*(coder: Coder, setter: static[CTLSetter], val: int32) =
     import opussum
     let encoder = createEncoder(48000, 2, 960, Audio)
     encoder.performCTL(setMaxBandwidth, bandwidthWide.int32)
+    # Macros can be passed as a string (must be static though)
+    encoder.performCTL(
+      "OPUS_SET_MAX_BANDWIDTH".EncoderCTLSetter,
+      bandwidthWide.int32
+    )
+
   performCTLImpl(setter, val.cint)
 

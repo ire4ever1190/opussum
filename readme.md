@@ -1,6 +1,8 @@
-Wrapper around [libopus](https://opus-codec.org/)
+High level wrapper around [libopus](https://opus-codec.org/)
 
-[Docs here](https://docs.leahy.dev/opussum/stable)
+[![Tests](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml/badge.svg)](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml)
+
+[Docs here](https://tempdocs.netlify.app/opussum/stable)
 
 Requires `opus` to be installed (usually done with your systems package manager)
 

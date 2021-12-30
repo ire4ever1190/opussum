@@ -58,6 +58,20 @@ proc createEncoder*(sampleRate: int32, channels: range[1..2], frameSize: int, ap
 
 proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   ## Encodes some PCMBytes_ into an opus frame
+  runnableExamples:
+    import std/streams
+    import opussum
+    let
+      file = newFileStream("tests/test.raw")
+      enc = createEncoder(48000, 2, 960, Voip)
+    while not file.atEnd:
+      let
+        pcmBytes = file.readStr(
+          enc.frameSize * enc.channels * 2 # We want to encode two channels worth of frame data
+        ).toPCMData(enc)
+        encodedData = enc.encode(pcmBytes) # Encode PCM to opus frame
+      # Encoded data can now be sent off to somewhere else
+
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
   result = newCArray[uint8](data.len)
