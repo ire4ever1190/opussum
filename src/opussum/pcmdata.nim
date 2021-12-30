@@ -2,12 +2,6 @@ import common
 import lenientops
 
 type
-  ## TODO: Replace this with CArray?
-  # PCMData* = object
-    # ## Stores raw pcm data.
-    # ## * **len**: Length of the data (number of int16 values in the array)
-    # len*: int
-    # data*: ptr UncheckedArray[opusInt16]
   PCMData* = CArray[opusInt16]
 
 # TODO: See if this works with single channel data
