@@ -38,7 +38,9 @@ type
     ## Any CTL c macro that gets a value
   CTLSetter = GenericCTLSetter | EncoderCTLSetter | DecoderCTLSetter
     ## Any CTL c macro that sets a value
-{.push header: currentSourcePath().parentDir() / "concrete_defines.h".}
+    
+{.emit: slurp(currentSourcePath().parentDir() / "concrete_defines.h").}
+
 let
   resetState* {.importc: "opus_reset_state".}: cint
     ## Resets the codec state to be equivalent to a freshly initialized state
@@ -60,7 +62,6 @@ let
   bandwidthFull*      {.importc: "opus_bandwitdh_fullband".}: cint
     ## 20 kHz bandpass
 
-{.pop.}
 
 const
   # Generic CTL codes

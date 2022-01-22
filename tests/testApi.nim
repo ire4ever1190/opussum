@@ -36,16 +36,13 @@ suite "Decoder":
       decodedData = decoder.decode(encodedData)
 
 
-when (NimMajor, NimMinor) > (1, 4): 
-  # Nim 1.4 >= has issue with CTL stuff not getting included properly
-  # using nim 1.6 <= fixes this
-  suite "CTL codes":
-    let encoder = createEncoder(48000, 2, 960, Audio)
-    test "Get a value":
-      check encoder.performCTL(getBitrate) == 120000
+suite "CTL codes":
+  let encoder = createEncoder(48000, 2, 960, Audio)
+  test "Get a value":
+    check encoder.performCTL(getBitrate) == 120000
 
-    test "Set a value":
-      encoder.performCTL(setBitrate, 36000)
-      check encoder.performCTL(getBitrate) == 36000
+  test "Set a value":
+    encoder.performCTL(setBitrate, 36000)
+    check encoder.performCTL(getBitrate) == 36000
 
 rawData.close()
