@@ -40,9 +40,10 @@ suite "CTL codes":
   let encoder = createEncoder(48000, 2, 960, Audio)
   test "Get a value":
     check encoder.performCTL(getBitrate) == 120000
-
+    
   test "Set a value":
     encoder.performCTL(setBitrate, 36000)
     check encoder.performCTL(getBitrate) == 36000
+
 
 rawData.close()

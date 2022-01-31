@@ -1,8 +1,5 @@
 import carray
 
-{.passC: staticExec("pkg-config --cflags opus").}
-{.passL: staticExec("pkg-config --libs opus").}
-
 
 # TODO: Wrap rest of library
 
@@ -57,9 +54,9 @@ type
 
 const
   allowedSamplingRates* = [8000.int32, 12000, 16000, 24000, 48000]
-  opusHeader* = "opus/opus.h"
   maxFrameSize* {.intdefine.} = 6 * 960
   maxPacketSize* {.intdefine.} = 3 * 1276
+  opusLib* = "libopus.so"
   
 template checkRC*(call: untyped) =
   ## Checks the return value of a function and throws error if < 0.
@@ -70,16 +67,13 @@ template checkRC*(call: untyped) =
     let error = OpusErrorCodes(res)
     raise (ref OpusError)(msg: $error)
 
-let
-  opusVersion* {.header: opusHeader, importc: "API_VERSION".}: cint
-    ##  API version for this opus headers. Can be used to check for features at compile time
 
 proc packetSize*[T](obj: OpaqueOpusObject[T]): int {.inline.} =
   ## Returns the packet size for an encoder/decoder (frameSize * channels).
   ## This can be used to figure out how much needs to be read from a stream for an encoder
   result = obj.frameSize * obj.channels
 
-proc opusVersionString*(): cstring {.header: opusHeader, importc: "opus_get_version_string".} =
+proc opusVersionString*(): cstring {.cdecl, dynlib: opusLib, importc: "opus_get_version_string".} =
   ## Gets the libopus version string.
   ##
   ## Applications may look for the substring "-fixed" in the version string to determine whether they have a fixed-point or floating-point build at runtime.

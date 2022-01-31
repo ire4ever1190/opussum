@@ -8,7 +8,7 @@ type
   OpusDecoder* = OpaqueOpusObject[OpusDecoderRaw]
 
 
-{.push header: opusHeader.}
+{.push cdecl, dynlib: opusLib.}
 
 proc getDecoderSize*(channels: cint): cint {.importc: "opus_decoder_get_size".}
   ## Gets the size of an OpusDecoderRaw_ structu
@@ -32,9 +32,10 @@ proc decode*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, pcm: ptr o
   ## * **decodeFec**: flag (0 or 1) to request that any in-band forward error correction data be decoded. If no such data is available, the frame is decoded as if it was lost
 
 
-proc performCTL*(st: ptr OpusDecoderRaw, request: cint): cint {.importc: "opus_encoder_ctl", varargs.}
+proc performCTL*(st: ptr OpusDecoderRaw, request: cint): cint {.importc: "opus_decoder_ctl", varargs.}
   ## Performs a CTL code.
-  ## Only generic or decoder codes can be run
+  ## Returns error code
+proc performCTL*(st: ptr OpusDecoderRaw, request: cint, param: ptr cint): cint {.importc: "opus_decoder_ctl".}
 
 proc decodeFloat*(st: ptr OpusDecoderRaw, data: ptr uint8, len: opusInt32, pcm: ptr cfloat, frame_size, decodeFec: cint): cint {.importc: "opus_decode_float".}
   ## Decodes an opus packet with floating point input.

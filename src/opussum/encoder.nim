@@ -8,7 +8,9 @@ type
 
   OpusEncoder* = OpaqueOpusObject[OpusEncoderRaw]
 
-{.push header: opusHeader.}
+# {.push header: opusHeader.}
+{.push cdecl, dynlib: opusLib.}
+
 proc getEncoderSize*(channels: cint): cint {.importc: "opus_encoder_get_size".}
   ## Gets the size of an OpusEncoderRaw structure
   ## * **channels**: Number of channels. This must be 1 or 2
@@ -40,10 +42,11 @@ proc opusCreateEncoder*(fs: opusInt32, channels, application: cint, error: ptr c
 
 proc destroy*(st: ptr OpusEncoderRaw) {.importc: "opus_encoder_destroy".}
   ## Frees an OpusEncoderRaw_ allocated by opusCreateEncoder_
-
+  
 proc performCTL*(st: ptr OpusEncoderRaw, request: cint): cint {.importc: "opus_encoder_ctl", varargs.}
   ## Performs a CTL code.
-  ## only generic or encoder codes can be ran
+  ## Returns error code
+proc performCTL*(st: ptr OpusEncoderRaw, request: cint, param: ptr cint): cint {.importc: "opus_encoder_ctl".}
 
 proc encodeFloat*(st: ptr OpusEncoderRaw, pcm: ptr cfloat, frameSize: cint, outData: ptr uint8, maxBytes: opusInt32) {.importc: "opus_encode_float".}
   ## Encodes an Opus frame from floating point input.

@@ -1,6 +1,6 @@
 High level wrapper around [libopus](https://opus-codec.org/) (tested against 1.3.1)
 
-Requires `opus` to be installed (usually done with your systems package manager)
+Requires `opus` to be installed (usually done with your systems package manager, you can also follow the guide [here](https://github.com/shardlab/discordrb/wiki/Installing-libopus))
 
 
 [![Tests](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml/badge.svg)](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml)

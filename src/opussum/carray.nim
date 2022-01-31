@@ -7,12 +7,17 @@ type
     ## C array abstraction, use result of pass_ to pass the internal data to an array
     internal*: ptr UncheckedArray[T]
     len*: int
+
+const usingThreads = compileOption("threads")
+
+    
     
 proc newCArray*[T](size: int): CArray[T] =
   ## Creates a new CArray with size `size`.
   ## `T` should not contain GC memory
   result.len = size
-  result.internal = cast[ptr UncheckedArray[T]](createShared(T, size))
+    
+  result.internal = cast[ptr UncheckedArray[T]](when usingThreads: createShared(T, size) else: create(T, size))
 
 proc `[]`*[T](arr: CArray[T], index: int): T =
   result = arr.internal[index]
@@ -42,7 +47,11 @@ proc pass*[T](arr: CArray[T]): ptr T =
 
 proc `=destroy`[T](arr: var CArray[T]) =
   if arr.internal != nil:
-    freeShared arr.internal # Do I need to destroy all the integers inside?
+    # Do I need to destroy all the items inside?
+    when usingThreads:
+      freeShared arr.internal
+    else:
+      dealloc arr.internal
     arr.internal = nil
 
 proc `=copy`[T](dst: var CArray[T], src: CArray[T]) =
