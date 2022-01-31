@@ -56,7 +56,7 @@ const
   allowedSamplingRates* = [8000.int32, 12000, 16000, 24000, 48000]
   maxFrameSize* {.intdefine.} = 6 * 960
   maxPacketSize* {.intdefine.} = 3 * 1276
-  opusLib* = "libopus.so"
+  opusLib* = "libopus.(so|dll)"
   
 template checkRC*(call: untyped) =
   ## Checks the return value of a function and throws error if < 0.
