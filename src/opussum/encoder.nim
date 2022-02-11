@@ -86,12 +86,12 @@ proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
 
   assert encoder.internal != nil, "Encoder has been destroyed"
   # Allocate needed buffers
-  result = newCArray[uint8](data.len)
+  result = newSeq[uint8](data.len)
   let length = encoder.internal.encode(
-    pass data,
+    addr data[0],
     encoder.frameSize.cint,
-    pass result,
+    addr result[0],
     data.len.opusInt32
   )
   checkRC length
-  result.len = length
+  result.setLen(length)

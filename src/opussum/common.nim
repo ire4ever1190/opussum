@@ -1,6 +1,3 @@
-import carray
-
-
 # TODO: Wrap rest of library
 
 type
@@ -50,7 +47,7 @@ type
   opusInt16* = cshort
   opusInt32* = cint
 
-  OpusFrame* = CArray[uint8]
+  OpusFrame* = seq[uint8]
 
 const
   allowedSamplingRates* = [8000.int32, 12000, 16000, 24000, 48000]
@@ -88,4 +85,3 @@ template checkSampleRate*(sampleRate: int32) =
   ## **Internal**: Used to check if a sample rate is a correct value(See allowedSamplingRates_)
   assert sampleRate in allowedSamplingRates, "sampling must be one of 8000, 12000, 16000, 24000, or 48000"
 
-export carray

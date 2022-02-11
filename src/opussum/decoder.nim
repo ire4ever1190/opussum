@@ -74,9 +74,9 @@ proc createDecoder*(sampleRate: int32, channels: range[1..2], frameSize: int): O
   result.frameSize = frameSize
   result.channels = channels
 
-proc getNumSamples*(decoder: OpusDecoder, packet: CArray[uint8]): int =
+proc getNumSamples*(decoder: OpusDecoder, packet: seq[uint8]): int =
   ## Gets the number of samples of an Opus packet
-  result = int decoder.internal.getNumSamples(pass packet, packet.len.opusInt32)
+  result = int decoder.internal.getNumSamples(addr packet[0], packet.len.opusInt32)
 
 proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = false): PCMData =
   ## Decodes an opus frame
@@ -97,13 +97,13 @@ proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = f
 
   assert decoder.internal != nil, "Encoder has been destroyed"
   let packetSize = decoder.packetSize
-  result = newCArray[opusInt16](packetSize)
+  result = newSeq[opusInt16](packetSize)
   let frameSize = decoder.internal.decode(
-    pass encoded,
+    addr encoded[0],
     encoded.len.opusInt32,
-    pass result,
+    addr result[0],
     cint(maxFrameSize),
     cast[cint](errorCorrection)
     )
   checkRC frameSize
-  result.len = frameSize * decoder.channels 
+  result.setLen frameSize * decoder.channels

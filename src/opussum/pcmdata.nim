@@ -2,7 +2,7 @@ import common
 import lenientops
 
 type
-  PCMData* = CArray[opusInt16]
+  PCMData* = seq[opusInt16]
 
 # TODO: See if this works with single channel data
 
@@ -10,7 +10,7 @@ proc toPCMData*(data: sink string, frameSize, channels: int): PCMData =
   ## Converts a string to pcm data.
   assert data.len <= frameSize * channels * 2, "Data is too big"
   let size = frameSize * channels
-  result = newCArray[opusInt16](size)
+  result = newSeq[opusInt16](size)
   for i in 0..<(data.len div 2):
     # Merge two bytes into one 16 bit integer
     result[i] = cast[opusInt16](
