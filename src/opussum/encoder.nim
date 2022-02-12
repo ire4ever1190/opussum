@@ -88,9 +88,9 @@ proc encode*(encoder: OpusEncoder, data: PCMData): OpusFrame =
   # Allocate needed buffers
   result = newSeq[uint8](data.len)
   let length = encoder.internal.encode(
-    addr data[0],
+    unsafeAddr data[0],
     encoder.frameSize.cint,
-    addr result[0],
+    unsafeAddr result[0],
     data.len.opusInt32
   )
   checkRC length
