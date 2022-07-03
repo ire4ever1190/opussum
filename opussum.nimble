@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.6.1"
+version       = "0.6.2"
 author        = "Jake Leahy"
 description   = "Wrapper around libopus"
 license       = "MIT"
