@@ -1,4 +1,4 @@
-High level wrapper around [libopus](https://opus-codec.org/) (tested against 1.3.1)
+High level wrapper around [libopus](https://opus-codec.org/) (tested against 1.3.1 and 1.4)
 
 Requires `opus` to be installed (usually done with your systems package manager, you can also follow the guide [here](https://github.com/shardlab/discordrb/wiki/Installing-libopus))
 
