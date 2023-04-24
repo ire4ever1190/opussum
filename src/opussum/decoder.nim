@@ -103,7 +103,7 @@ proc decode*(decoder: OpusDecoder, encoded: OpusFrame, errorCorrection: bool = f
     encoded.len.opusInt32,
     unsafeAddr result[0],
     cint(maxFrameSize),
-    cast[cint](errorCorrection)
+    cint(errorCorrection)
     )
   checkRC frameSize
   result.setLen frameSize * decoder.channels
