@@ -5,6 +5,10 @@ on: [push, pull_request]
 
 jobs:
   test:
+    permissions:
+      pages: write # To deploy to Pages
+      id-token: write # Verify deployment
+
     timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
@@ -15,22 +19,32 @@ jobs:
 
     name: Nim ${{ matrix.nim }}
     steps:
+    - name: Setup Nim Enviroment
+      uses: actions/checkout@master
+
+    - uses: jiro4989/setup-nim-action@v1
+      with:
+          nim-version: ${{ matrix.nim }}
+
     - name: Cache choosenim
       id: cache-choosenim
       uses: actions/cache@v1
       with:
         path: ~/.nimble
         key: ${{ runner.os }}-nimble-${{ matrix.nim }}-${{ hashFiles('*.nimble') }}
-        
-    - name: Setup Nim Enviroment
-      uses: actions/checkout@master
-    - uses: jiro4989/setup-nim-action@v1
-      with:
-          nim-version: ${{ matrix.nim }}
+
     - name: Update nimble
       run: nimble update
+
     - name: Install dependencies
       run: sudo apt-get install libopus-dev pkg-config
         
     - name: Run Tests
       run: nimble test
+
+    - name: "Build documentation"
+      uses: ire4ever1190/nim-docs-action@v1
+      if: github.ref == 'refs/heads/master' && matrix.nim == 'stable'
+      with:
+        main-file: "src/opussum.nim"
+        deploy: "pages"

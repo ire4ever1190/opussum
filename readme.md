@@ -5,7 +5,7 @@ Requires `opus` to be installed (usually done with your systems package manager,
 
 [![Tests](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml/badge.svg)](https://github.com/ire4ever1190/opussum/actions/workflows/test.yml)
 
-[Docs here](https://tempdocs.netlify.app/opussum/stable)
+[Docs here](https://ire4ever1190.github.io/opussum/opussum.html)
 
 A lot of the documentation for the procs is copied from their original documentation [here](https://www.opus-codec.org/docs/opus_api-1.3.1/index.html) and
 so it another good place for research if you are using the library
